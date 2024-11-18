@@ -64,15 +64,25 @@
     #resetButton:hover {
       background-color: #45a049;
     }
+
+    .scores {
+      margin-top: 20px;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Jeu avec IA- Grille 10x10</h1>
+  <h1>Jeu à deux joueurs - Grille 10x10</h1>
   <div id="grid" class="grid"></div>
 
   <div class="info">
     <p>Tour du joueur: <span id="player-turn">1 (rouge)</span></p>
+  </div>
+
+  <div class="scores">
+    <p>Score Joueur 1 (Rouge): <span id="score-player-1">0</span></p>
+    <p>Score Joueur 2 (Vert): <span id="score-player-2">0</span></p>
   </div>
 
   <button id="resetButton">Réinitialiser la grille</button>
@@ -81,9 +91,12 @@
     const gridContainer = document.getElementById("grid");
     const playerTurnDisplay = document.getElementById("player-turn");
     const resetButton = document.getElementById("resetButton");
+    const scorePlayer1Display = document.getElementById("score-player-1");
+    const scorePlayer2Display = document.getElementById("score-player-2");
 
     let currentPlayer = 1; // 1 pour le joueur 1 (rouge), 2 pour le joueur 2 (vert)
     let grid = Array.from({ length: 10 }, () => Array(10).fill(null));
+    let scores = { 1: 0, 2: 0 }; // Scores des joueurs
 
     // Création de la grille
     for (let i = 0; i < 10; i++) {
@@ -95,109 +108,28 @@
 
         // Ajout d'un événement de clic sur chaque cellule
         cell.addEventListener("click", function () {
-          if (grid[i][j] !== null || currentPlayer === 2) return;
+          if (grid[i][j] !== null) return;
 
-          makeMove(i, j, currentPlayer);
-          currentPlayer = 2;
-          playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (vert)`;
+          const circle = document.createElement("div");
+          circle.classList.add("circle");
 
-          setTimeout(() => {
-            aiMakeMove();
-            currentPlayer = 1;
-            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (rouge)`;
-          }, 500); // Délai pour simuler un peu de réflexion de l'IA
+          if (currentPlayer === 1) {
+            circle.classList.add("red");
+            grid[i][j] = 1; // Marque le coup du joueur 1
+          } else {
+            circle.classList.add("green");
+            grid[i][j] = 2; // Marque le coup du joueur 2
+          }
+
+          cell.appendChild(circle);
+          checkEncirclement(i, j, currentPlayer);
+
+          currentPlayer = currentPlayer === 1 ? 2 : 1;
+          playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (${currentPlayer === 1 ? "rouge" : "vert"})`;
         });
 
         gridContainer.appendChild(cell);
       }
-    }
-
-    // Fonction pour effectuer un coup
-    function makeMove(row, col, player) {
-      if (grid[row][col] !== null) return;
-
-      const cell = gridContainer.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-      const circle = document.createElement("div");
-      circle.classList.add("circle");
-
-      if (player === 1) {
-        circle.classList.add("red");
-        grid[row][col] = 1; // Marque le coup du joueur 1
-      } else {
-        circle.classList.add("green");
-        grid[row][col] = 2; // Marque le coup du joueur 2
-      }
-
-      cell.appendChild(circle);
-      checkEncirclement(row, col, player);
-    }
-
-    // Fonction pour que l'IA joue un coup
-    function aiMakeMove() {
-      const bestMove = findBestMove();
-      if (bestMove) {
-        makeMove(bestMove.row, bestMove.col, 2);
-        checkEncirclement(bestMove.row, bestMove.col, 2); // Vérifie s'il y a des captures après le mouvement
-      }
-    }
-
-    // Fonction pour trouver le meilleur coup pour l'IA (Joueur 2)
-    function findBestMove() {
-      let bestScore = -Infinity;
-      let bestMove = null;
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === null) {
-            grid[i][j] = 2; // Simule un coup de l'IA
-            let score = evaluateBoard();
-            grid[i][j] = null;
-
-            if (score > bestScore) {
-              bestScore = score;
-              bestMove = { row: i, col: j };
-            }
-          }
-        }
-      }
-
-      return bestMove;
-    }
-
-    // Fonction pour évaluer la grille - Plus il y a de rouges encerclés, mieux c'est pour l'IA
-    function evaluateBoard() {
-      let score = 0;
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === 2) {
-            // Ajouter des points pour chaque pion vert entourant des rouges
-            score += countAdjacentOpponent(i, j);
-          }
-        }
-      }
-
-      return score;
-    }
-
-    // Compte les pions rouges adjacents pour évaluer le potentiel de capture
-    function countAdjacentOpponent(row, col) {
-      const directions = [
-        [-1, 0], [1, 0], [0, -1], [0, 1]
-      ];
-      let count = 0;
-
-      for (const [dx, dy] of directions) {
-        const newRow = row + dx;
-        const newCol = col + dy;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
-          if (grid[newRow][newCol] === 1) {
-            count++;
-          }
-        }
-      }
-
-      return count;
     }
 
     // Fonction pour vérifier si une région est complètement encerclée
@@ -227,6 +159,8 @@
             const region = [];
             if (isEncircled(i, j, region)) {
               colorEncircledRegion(region, player);
+              scores[player] += region.length; // Mettre à jour le score
+              updateScoreDisplay(); // Actualiser l'affichage du score
             }
           }
         }
@@ -240,8 +174,14 @@
       region.forEach(([r, c]) => {
         const cell = gridContainer.querySelector(`[data-row="${r}"][data-col="${c}"]`);
         cell.style.backgroundColor = color;
-        grid[r][c] = null; // Marquer comme traité pour ne pas recapturer
+        grid[r][c] = null; // Marquer comme traité
       });
+    }
+
+    // Fonction pour mettre à jour l'affichage des scores
+    function updateScoreDisplay() {
+      scorePlayer1Display.textContent = scores[1];
+      scorePlayer2Display.textContent = scores[2];
     }
 
     // Réinitialiser la grille
@@ -249,7 +189,11 @@
       grid = Array.from({ length: 10 }, () => Array(10).fill(null));
       gridContainer.innerHTML = "";
       currentPlayer = 1;
+      scores = { 1: 0, 2: 0 }; // Réinitialiser les scores
+      updateScoreDisplay(); // Actualiser l'affichage du score
       playerTurnDisplay.textContent = `Tour du joueur: 1 (rouge)`;
+
+      // Recréer la grille
       for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
           const cell = document.createElement("div");
@@ -258,17 +202,24 @@
           cell.dataset.col = j;
 
           cell.addEventListener("click", function () {
-            if (grid[i][j] !== null || currentPlayer === 2) return;
+            if (grid[i][j] !== null) return;
 
-            makeMove(i, j, currentPlayer);
-            currentPlayer = 2;
-            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (vert)`;
+            const circle = document.createElement("div");
+            circle.classList.add("circle");
 
-            setTimeout(() => {
-              aiMakeMove();
-              currentPlayer = 1;
-              playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (rouge)`;
-            }, 500);
+            if (currentPlayer === 1) {
+              circle.classList.add("red");
+              grid[i][j] = 1; // Marque le coup du joueur 1
+            } else {
+              circle.classList.add("green");
+              grid[i][j] = 2; // Marque le coup du joueur 2
+            }
+
+            cell.appendChild(circle);
+            checkEncirclement(i, j, currentPlayer);
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (${currentPlayer === 1 ? "rouge" : "vert"})`;
           });
 
           gridContainer.appendChild(cell);
