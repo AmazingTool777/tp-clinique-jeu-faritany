@@ -45,6 +45,10 @@
       background-color: green;
     }
 
+    .captured {
+      background-color: #d3d3d3; /* Gris pour les cellules capturées */
+    }
+
     .info {
       margin-top: 20px;
       font-size: 18px;
@@ -144,7 +148,7 @@
         for (let j = 0; j < 10; j++) {
           if (grid[i][j] === null) {
             grid[i][j] = 2; // Simule un coup de l'IA
-            let score = evaluateBoard();
+            let score = minimax(grid, 3, false, -Infinity, Infinity); // profondeur limitée à 3
             grid[i][j] = null;
 
             if (score > bestScore) {
@@ -158,20 +162,91 @@
       return bestMove;
     }
 
-    // Fonction pour évaluer la grille - Plus il y a de rouges encerclés, mieux c'est pour l'IA
-    function evaluateBoard() {
+    // Fonction Minimax avec élagage Alpha-Beta
+    function minimax(board, depth, isMaximizingPlayer, alpha, beta) {
+      if (depth === 0 || isTerminal(board)) {
+        return evaluateBoard(board); // Calculer l'évaluation de la grille courante
+      }
+
+      if (isMaximizingPlayer) {
+        let maxEval = -Infinity;
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (board[i][j] === null) {
+              board[i][j] = 2;
+              let eval = minimax(board, depth - 1, false, alpha, beta);
+              board[i][j] = null;
+              maxEval = Math.max(maxEval, eval);
+              alpha = Math.max(alpha, eval);
+              if (beta <= alpha) {
+                break; // Élagage
+              }
+            }
+          }
+        }
+        return maxEval;
+      } else {
+        let minEval = Infinity;
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (board[i][j] === null) {
+              board[i][j] = 1;
+              let eval = minimax(board, depth - 1, true, alpha, beta);
+              board[i][j] = null;
+              minEval = Math.min(minEval, eval);
+              beta = Math.min(beta, eval);
+              if (beta <= alpha) {
+                break; // Élagage
+              }
+            }
+          }
+        }
+        return minEval;
+      }
+    }
+
+    // Fonction pour évaluer la grille - Priorité à la défense
+    function evaluateBoard(board) {
       let score = 0;
 
       for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === 2) {
-            // Ajouter des points pour chaque pion vert entourant des rouges
+          if (board[i][j] === 2) {
+            // Points pour le contrôle des zones
             score += countAdjacentOpponent(i, j);
+          } else if (board[i][j] === 1) {
+            // Malus si des cases du joueur adverse sont bien entourées (à défendre)
+            score -= countThreats(i, j);
           }
         }
       }
 
       return score;
+    }
+
+    // Compte les menaces potentielles du joueur adverse
+    function countThreats(row, col) {
+      const directions = [
+        [-1, 0], [1, 0], [0, -1], [0, 1]
+      ];
+      let threatCount = 0;
+
+      for (const [dx, dy] of directions) {
+        const newRow = row + dx;
+        const newCol = col + dy;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+          if (grid[newRow][newCol] === null) {
+            threatCount++;
+          }
+        }
+      }
+
+      return threatCount;
+    }
+
+    // Fonction pour vérifier si la grille est terminale (pleine)
+    function isTerminal(board) {
+      return board.flat().every(cell => cell !== null || cell === -1);
     }
 
     // Compte les pions rouges adjacents pour évaluer le potentiel de capture
@@ -229,12 +304,10 @@
 
     // Fonction pour colorier la région encerclée
     function colorEncircledRegion(region, player) {
-      const color = player === 1 ? "black" : "brown";
-
       region.forEach(([r, c]) => {
         const cell = gridContainer.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-        cell.style.backgroundColor = color;
-        grid[r][c] = null; // Marquer comme traité
+        cell.classList.add("captured");
+        grid[r][c] = -1; // Marquer comme capturé
       });
     }
 
@@ -272,6 +345,7 @@
         }
       }
     });
+
   </script>
 
 </body>
