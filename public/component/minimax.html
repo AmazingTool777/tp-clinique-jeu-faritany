@@ -1,256 +1,91 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grille 10x10 - Jeu à deux joueurs</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(10, 50px);
-      grid-template-rows: repeat(10, 50px);
-      gap: 1px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-
-    .cell {
-      width: 50px;
-      height: 50px;
-      background-color: #f0f0f0;
-      border: 1px solid #999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .circle {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .red {
-      background-color: red;
-    }
-
-    .green {
-      background-color: green;
-    }
-
-    .captured {
-      background-color: #d3d3d3; /* Gris pour les cellules capturées */
-    }
-
-    .info {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-
-    #resetButton {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    #resetButton:hover {
-      background-color: #45a049;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>Jeu avec IA - Grille 10x10</h1>
-  <div id="grid" class="grid"></div>
-
-  <div class="info">
-    <p>Tour du joueur: <span id="player-turn">1 (rouge)</span></p>
-  </div>
-
-  <button id="resetButton">Réinitialiser la grille</button>
-
-  <script>
-    const gridContainer = document.getElementById("grid");
-    const playerTurnDisplay = document.getElementById("player-turn");
-    const resetButton = document.getElementById("resetButton");
-
-    let currentPlayer = 1; // 1 pour le joueur 1 (rouge), 2 pour le joueur 2 (vert)
-    let grid = Array.from({ length: 10 }, () => Array(10).fill(null));
-
-    // Création de la grille
-    for (let i = 0; i < 10; i++) {
-      for (let j = 0; j < 10; j++) {
-        const cell = document.createElement("div");
-        cell.classList.add("cell");
-        cell.dataset.row = i;
-        cell.dataset.col = j;
-
-        // Ajout d'un événement de clic sur chaque cellule
-        cell.addEventListener("click", function () {
-          if (grid[i][j] !== null || currentPlayer === 2) return;
-
-          makeMove(i, j, currentPlayer);
-          currentPlayer = 2;
-          playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (vert)`;
-
-          setTimeout(() => {
-            aiMakeMove();
-            currentPlayer = 1;
-            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (rouge)`;
-          }, 500); // Délai pour simuler un peu de réflexion de l'IA
-        });
-
-        gridContainer.appendChild(cell);
-      }
-    }
-
-    // Fonction pour effectuer un coup
-    function makeMove(row, col, player) {
-      if (grid[row][col] !== null) return;
-
-      const cell = gridContainer.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-      const circle = document.createElement("div");
-      circle.classList.add("circle");
-
-      if (player === 1) {
-        circle.classList.add("red");
-        grid[row][col] = 1; // Marque le coup du joueur 1
-      } else {
-        circle.classList.add("green");
-        grid[row][col] = 2; // Marque le coup du joueur 2
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grille 10x10 - Jeu à deux joueurs</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
       }
 
-      cell.appendChild(circle);
-      checkEncirclement(row, col, player);
-    }
-
-    // Fonction pour que l'IA joue un coup
-    function aiMakeMove() {
-      const bestMove = findBestMove();
-      if (bestMove) {
-        makeMove(bestMove.row, bestMove.col, 2);
-      }
-    }
-
-    // Fonction pour trouver le meilleur coup pour l'IA (Joueur 2)
-    function findBestMove() {
-      let bestScore = -Infinity;
-      let bestMove = null;
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === null) {
-            grid[i][j] = 2; // Simule un coup de l'IA
-            let score = evaluateBoard();
-            grid[i][j] = null;
-
-            if (score > bestScore) {
-              bestScore = score;
-              bestMove = { row: i, col: j };
-            }
-          }
-        }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(10, 50px);
+        grid-template-rows: repeat(10, 50px);
+        gap: 1px;
+        justify-content: center;
+        margin-top: 20px;
       }
 
-      return bestMove;
-    }
-
-    // Fonction pour évaluer la grille - Plus il y a de rouges encerclés, mieux c'est pour l'IA
-    function evaluateBoard() {
-      let score = 0;
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === 2) {
-            // Ajouter des points pour chaque pion vert entourant des rouges
-            score += countAdjacentOpponent(i, j);
-          }
-        }
+      .cell {
+        width: 50px;
+        height: 50px;
+        background-color: #f0f0f0;
+        border: 1px solid #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
       }
 
-      return score;
-    }
-
-    // Compte les pions rouges adjacents pour évaluer le potentiel de capture
-    function countAdjacentOpponent(row, col) {
-      const directions = [
-        [-1, 0], [1, 0], [0, -1], [0, 1]
-      ];
-      let count = 0;
-
-      for (const [dx, dy] of directions) {
-        const newRow = row + dx;
-        const newCol = col + dy;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
-          if (grid[newRow][newCol] === 1) {
-            count++;
-          }
-        }
+      .circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-block;
       }
 
-      return count;
-    }
-
-    // Fonction pour vérifier si une région est complètement encerclée
-    function checkEncirclement(row, col, player) {
-      const visited = Array.from({ length: 10 }, () => Array(10).fill(false));
-      const opponent = player === 1 ? 2 : 1;
-
-      const isEncircled = (r, c, region) => {
-        if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
-        if (visited[r][c] || grid[r][c] === player || grid[r][c] === -1) return true; // Considère également les cellules capturées
-        if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
-        visited[r][c] = true;
-
-        region.push([r, c]);
-
-        const up = isEncircled(r - 1, c, region);
-        const down = isEncircled(r + 1, c, region);
-        const left = isEncircled(r, c - 1, region);
-        const right = isEncircled(r, c + 1, region);
-
-        return up && down && left && right;
-      };
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === opponent && !visited[i][j]) {
-            const region = [];
-            if (isEncircled(i, j, region)) {
-              colorEncircledRegion(region, player);
-            }
-          }
-        }
+      .red {
+        background-color: red;
       }
-    }
 
-    // Fonction pour colorier la région encerclée
-    function colorEncircledRegion(region, player) {
-      region.forEach(([r, c]) => {
-        const cell = gridContainer.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-        cell.classList.add("captured");
-        grid[r][c] = -1; // Marquer comme capturé - Les cellules ne peuvent plus entourer d'autres cellules
-      });
-    }
+      .green {
+        background-color: green;
+      }
 
-    // Réinitialiser la grille
-    resetButton.addEventListener("click", function () {
-      grid = Array.from({ length: 10 }, () => Array(10).fill(null));
-      gridContainer.innerHTML = "";
-      currentPlayer = 1;
-      playerTurnDisplay.textContent = `Tour du joueur: 1 (rouge)`;
+      .captured {
+        background-color: #858585; /* Gris pour les cellules capturées */
+      }
+
+      .info {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+
+      #resetButton {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      #resetButton:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Jeu contre IA</h1>
+    <div id="grid" class="grid"></div>
+
+    <div class="info">
+      <p>Tour du joueur: <span id="player-turn">1 (rouge)</span></p>
+    </div>
+
+    <script>
+      const gridContainer = document.getElementById("grid");
+      const playerTurnDisplay = document.getElementById("player-turn");
+
+      let currentPlayer = 1; // 1 pour le joueur 1 (rouge), 2 pour le joueur 2 (vert)
+      let grid = Array.from({ length: 10 }, () => Array(10).fill(null));
+
+      // Création de la grille
       for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
           const cell = document.createElement("div");
@@ -258,26 +93,161 @@
           cell.dataset.row = i;
           cell.dataset.col = j;
 
+          // Ajout d'un événement de clic sur chaque cellule
           cell.addEventListener("click", function () {
             if (grid[i][j] !== null || currentPlayer === 2) return;
 
             makeMove(i, j, currentPlayer);
             currentPlayer = 2;
-            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (vert)`;
+            playerTurnDisplay.textContent = `${currentPlayer} (vert)`;
 
             setTimeout(() => {
               aiMakeMove();
               currentPlayer = 1;
-              playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (rouge)`;
-            }, 500);
+              playerTurnDisplay.textContent = `${currentPlayer} (rouge)`;
+            }, 500); // Délai pour simuler un peu de réflexion de l'IA
           });
 
           gridContainer.appendChild(cell);
         }
       }
-    });
 
-  </script>
+      // Fonction pour effectuer un coup
+      function makeMove(row, col, player) {
+        if (grid[row][col] !== null) return;
 
-</body>
+        const cell = gridContainer.querySelector(
+          `[data-row="${row}"][data-col="${col}"]`
+        );
+        const circle = document.createElement("div");
+        circle.classList.add("circle");
+
+        if (player === 1) {
+          circle.classList.add("red");
+          grid[row][col] = 1; // Marque le coup du joueur 1
+        } else {
+          circle.classList.add("green");
+          grid[row][col] = 2; // Marque le coup du joueur 2
+        }
+
+        cell.appendChild(circle);
+        checkEncirclement(row, col, player);
+      }
+
+      // Fonction pour que l'IA joue un coup
+      function aiMakeMove() {
+        const bestMove = findBestMove();
+        if (bestMove) {
+          makeMove(bestMove.row, bestMove.col, 2);
+        }
+      }
+
+      // Fonction pour trouver le meilleur coup pour l'IA (Joueur 2)
+      function findBestMove() {
+        let bestScore = -Infinity;
+        let bestMove = null;
+
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (grid[i][j] === null) {
+              grid[i][j] = 2; // Simule un coup de l'IA
+              let score = evaluateBoard();
+              grid[i][j] = null;
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestMove = { row: i, col: j };
+              }
+            }
+          }
+        }
+
+        return bestMove;
+      }
+
+      // Fonction pour évaluer la grille - Plus il y a de rouges encerclés, mieux c'est pour l'IA
+      function evaluateBoard() {
+        let score = 0;
+
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (grid[i][j] === 2) {
+              // Ajouter des points pour chaque pion vert entourant des rouges
+              score += countAdjacentOpponent(i, j);
+            }
+          }
+        }
+
+        return score;
+      }
+
+      // Compte les pions rouges adjacents pour évaluer le potentiel de capture
+      function countAdjacentOpponent(row, col) {
+        const directions = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+        ];
+        let count = 0;
+
+        for (const [dx, dy] of directions) {
+          const newRow = row + dx;
+          const newCol = col + dy;
+          if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+            if (grid[newRow][newCol] === 1) {
+              count++;
+            }
+          }
+        }
+
+        return count;
+      }
+
+      // Fonction pour vérifier si une région est complètement encerclée
+      function checkEncirclement(row, col, player) {
+        const visited = Array.from({ length: 10 }, () => Array(10).fill(false));
+        const opponent = player === 1 ? 2 : 1;
+
+        const isEncircled = (r, c, region) => {
+          if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
+          if (visited[r][c] || grid[r][c] === player || grid[r][c] === -1)
+            return true; // Considère également les cellules capturées
+          if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
+          visited[r][c] = true;
+
+          region.push([r, c]);
+
+          const up = isEncircled(r - 1, c, region);
+          const down = isEncircled(r + 1, c, region);
+          const left = isEncircled(r, c - 1, region);
+          const right = isEncircled(r, c + 1, region);
+
+          return up && down && left && right;
+        };
+
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (grid[i][j] === opponent && !visited[i][j]) {
+              const region = [];
+              if (isEncircled(i, j, region)) {
+                colorEncircledRegion(region, player);
+              }
+            }
+          }
+        }
+      }
+
+      // Fonction pour colorier la région encerclée
+      function colorEncircledRegion(region, player) {
+        region.forEach(([r, c]) => {
+          const cell = gridContainer.querySelector(
+            `[data-row="${r}"][data-col="${c}"]`
+          );
+          cell.classList.add("captured");
+          grid[r][c] = -1; // Marquer comme capturé - Les cellules ne peuvent plus entourer d'autres cellules
+        });
+      }
+    </script>
+  </body>
 </html>

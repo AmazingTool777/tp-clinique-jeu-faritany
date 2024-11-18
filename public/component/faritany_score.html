@@ -1,199 +1,112 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grille 10x10 - Jeu à deux joueurs</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(10, 50px);
-      grid-template-rows: repeat(10, 50px);
-      gap: 1px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-
-    .cell {
-      width: 50px;
-      height: 50px;
-      background-color: #f0f0f0;
-      border: 1px solid #999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .circle {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .red {
-      background-color: red;
-    }
-
-    .green {
-      background-color: green;
-    }
-
-    .info {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-
-    #resetButton {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    #resetButton:hover {
-      background-color: #45a049;
-    }
-
-    .scores {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>Jeu à deux joueurs - Grille 10x10</h1>
-  <div id="grid" class="grid"></div>
-
-  <div class="info">
-    <p>Tour du joueur: <span id="player-turn">1 (rouge)</span></p>
-  </div>
-
-  <div class="scores">
-    <p>Score Joueur 1 (Rouge): <span id="score-player-1">0</span></p>
-    <p>Score Joueur 2 (Vert): <span id="score-player-2">0</span></p>
-  </div>
-
-  <button id="resetButton">Réinitialiser la grille</button>
-
-  <script>
-    const gridContainer = document.getElementById("grid");
-    const playerTurnDisplay = document.getElementById("player-turn");
-    const resetButton = document.getElementById("resetButton");
-    const scorePlayer1Display = document.getElementById("score-player-1");
-    const scorePlayer2Display = document.getElementById("score-player-2");
-
-    let currentPlayer = 1; // 1 pour le joueur 1 (rouge), 2 pour le joueur 2 (vert)
-    let grid = Array.from({ length: 10 }, () => Array(10).fill(null));
-    let scores = { 1: 0, 2: 0 }; // Scores des joueurs
-
-    // Création de la grille
-    for (let i = 0; i < 10; i++) {
-      for (let j = 0; j < 10; j++) {
-        const cell = document.createElement("div");
-        cell.classList.add("cell");
-        cell.dataset.row = i;
-        cell.dataset.col = j;
-
-        // Ajout d'un événement de clic sur chaque cellule
-        cell.addEventListener("click", function () {
-          if (grid[i][j] !== null) return;
-
-          const circle = document.createElement("div");
-          circle.classList.add("circle");
-
-          if (currentPlayer === 1) {
-            circle.classList.add("red");
-            grid[i][j] = 1; // Marque le coup du joueur 1
-          } else {
-            circle.classList.add("green");
-            grid[i][j] = 2; // Marque le coup du joueur 2
-          }
-
-          cell.appendChild(circle);
-          checkEncirclement(i, j, currentPlayer);
-
-          currentPlayer = currentPlayer === 1 ? 2 : 1;
-          playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (${currentPlayer === 1 ? "rouge" : "vert"})`;
-        });
-
-        gridContainer.appendChild(cell);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grille 10x10 - Jeu à deux joueurs</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
       }
-    }
 
-    // Fonction pour vérifier si une région est complètement encerclée
-    function checkEncirclement(row, col, player) {
-      const visited = Array.from({ length: 10 }, () => Array(10).fill(false));
-      const opponent = player === 1 ? 2 : 1;
-
-      const isEncircled = (r, c, region) => {
-        if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
-        if (visited[r][c] || grid[r][c] === player) return true;
-        if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
-        visited[r][c] = true;
-
-        region.push([r, c]);
-
-        const up = isEncircled(r - 1, c, region);
-        const down = isEncircled(r + 1, c, region);
-        const left = isEncircled(r, c - 1, region);
-        const right = isEncircled(r, c + 1, region);
-
-        return up && down && left && right;
-      };
-
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (grid[i][j] === opponent && !visited[i][j]) {
-            const region = [];
-            if (isEncircled(i, j, region)) {
-              colorEncircledRegion(region, player);
-              scores[player] += region.length; // Mettre à jour le score
-              updateScoreDisplay(); // Actualiser l'affichage du score
-            }
-          }
-        }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(10, 50px);
+        grid-template-rows: repeat(10, 50px);
+        gap: 1px;
+        justify-content: center;
+        margin-top: 20px;
       }
-    }
 
-    // Fonction pour colorier la région encerclée
-    function colorEncircledRegion(region, player) {
-      const color = player === 1 ? "black" : "brown";
+      .cell {
+        width: 50px;
+        height: 50px;
+        background-color: #f0f0f0;
+        border: 1px solid #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
 
-      region.forEach(([r, c]) => {
-        const cell = gridContainer.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-        cell.style.backgroundColor = color;
-        grid[r][c] = null; // Marquer comme traité
-      });
-    }
+      .circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-block;
+      }
 
-    // Fonction pour mettre à jour l'affichage des scores
-    function updateScoreDisplay() {
-      scorePlayer1Display.textContent = scores[1];
-      scorePlayer2Display.textContent = scores[2];
-    }
+      .red {
+        background-color: red;
+      }
 
-    // Réinitialiser la grille
-    resetButton.addEventListener("click", function () {
-      grid = Array.from({ length: 10 }, () => Array(10).fill(null));
-      gridContainer.innerHTML = "";
-      currentPlayer = 1;
-      scores = { 1: 0, 2: 0 }; // Réinitialiser les scores
-      updateScoreDisplay(); // Actualiser l'affichage du score
-      playerTurnDisplay.textContent = `Tour du joueur: 1 (rouge)`;
+      .green {
+        background-color: green;
+      }
 
-      // Recréer la grille
+      .info {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+
+      #resetButton {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      #resetButton:hover {
+        background-color: #45a049;
+      }
+
+      .scores {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+    </style>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="text-center py-4 pb-2">
+      <h1 class="text-3xl font-semibold">Jeu à deux joueurs</h1>
+    </header>
+
+    <div class="relative flex justify-center">
+      <p class="absolute left-3 top-1/2 -translate-y-1/2 text-left">
+        Score Joueur 1 (Rouge):
+        <span id="score-player-1" class="text-3xl block" xl>0</span>
+      </p>
+      <div id="grid" class="grid w-fit"></div>
+      <p class="absolute right-3 top-1/2 -translate-y-1/2 text-right">
+        Score Joueur 2 (Vert):
+        <span id="score-player-2" class="text-3xl block" xl>0</span>
+      </p>
+    </div>
+
+    <div class="info">
+      <p>
+        Tour du joueur:
+        <span id="player-turn" style="color: red">1 (rouge)</span>
+      </p>
+    </div>
+
+    <script>
+      const gridContainer = document.getElementById("grid");
+      const playerTurnDisplay = document.getElementById("player-turn");
+      const scorePlayer1Display = document.getElementById("score-player-1");
+      const scorePlayer2Display = document.getElementById("score-player-2");
+
+      let currentPlayer = 1; // 1 pour le joueur 1 (rouge), 2 pour le joueur 2 (vert)
+      let grid = Array.from({ length: 10 }, () => Array(10).fill(null));
+      let scores = { 1: 0, 2: 0 }; // Scores des joueurs
+
+      // Création de la grille
       for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
           const cell = document.createElement("div");
@@ -201,6 +114,7 @@
           cell.dataset.row = i;
           cell.dataset.col = j;
 
+          // Ajout d'un événement de clic sur chaque cellule
           cell.addEventListener("click", function () {
             if (grid[i][j] !== null) return;
 
@@ -219,14 +133,70 @@
             checkEncirclement(i, j, currentPlayer);
 
             currentPlayer = currentPlayer === 1 ? 2 : 1;
-            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (${currentPlayer === 1 ? "rouge" : "vert"})`;
+            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (${
+              currentPlayer === 1 ? "rouge" : "vert"
+            })`;
+            playerTurnDisplay.style.color =
+              currentPlayer === 1 ? "red" : "green";
           });
 
           gridContainer.appendChild(cell);
         }
       }
-    });
-  </script>
 
-</body>
+      // Fonction pour vérifier si une région est complètement encerclée
+      function checkEncirclement(row, col, player) {
+        const visited = Array.from({ length: 10 }, () => Array(10).fill(false));
+        const opponent = player === 1 ? 2 : 1;
+
+        const isEncircled = (r, c, region) => {
+          if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
+          if (visited[r][c] || grid[r][c] === player) return true;
+          if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
+          visited[r][c] = true;
+
+          region.push([r, c]);
+
+          const up = isEncircled(r - 1, c, region);
+          const down = isEncircled(r + 1, c, region);
+          const left = isEncircled(r, c - 1, region);
+          const right = isEncircled(r, c + 1, region);
+
+          return up && down && left && right;
+        };
+
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (grid[i][j] === opponent && !visited[i][j]) {
+              const region = [];
+              if (isEncircled(i, j, region)) {
+                colorEncircledRegion(region, player);
+                scores[player] += region.length; // Mettre à jour le score
+                updateScoreDisplay(); // Actualiser l'affichage du score
+              }
+            }
+          }
+        }
+      }
+
+      // Fonction pour colorier la région encerclée
+      function colorEncircledRegion(region, player) {
+        const color = player === 1 ? "black" : "brown";
+
+        region.forEach(([r, c]) => {
+          const cell = gridContainer.querySelector(
+            `[data-row="${r}"][data-col="${c}"]`
+          );
+          cell.style.backgroundColor = color;
+          grid[r][c] = null; // Marquer comme traité
+        });
+      }
+
+      // Fonction pour mettre à jour l'affichage des scores
+      function updateScoreDisplay() {
+        scorePlayer1Display.textContent = scores[1];
+        scorePlayer2Display.textContent = scores[2];
+      }
+    </script>
+  </body>
 </html>
