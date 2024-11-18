@@ -45,6 +45,10 @@
       background-color: green;
     }
 
+    .captured {
+      background-color: #d3d3d3; /* Gris pour les cellules capturées */
+    }
+
     .info {
       margin-top: 20px;
       font-size: 18px;
@@ -68,7 +72,7 @@
 </head>
 <body>
 
-  <h1>Jeu avec IA- Grille 10x10</h1>
+  <h1>Jeu avec IA - Grille 10x10</h1>
   <div id="grid" class="grid"></div>
 
   <div class="info">
@@ -137,7 +141,6 @@
       const bestMove = findBestMove();
       if (bestMove) {
         makeMove(bestMove.row, bestMove.col, 2);
-        checkEncirclement(bestMove.row, bestMove.col, 2); // Vérifie s'il y a des captures après le mouvement
       }
     }
 
@@ -207,7 +210,7 @@
 
       const isEncircled = (r, c, region) => {
         if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
-        if (visited[r][c] || grid[r][c] === player) return true;
+        if (visited[r][c] || grid[r][c] === player || grid[r][c] === -1) return true; // Considère également les cellules capturées
         if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
         visited[r][c] = true;
 
@@ -235,12 +238,10 @@
 
     // Fonction pour colorier la région encerclée
     function colorEncircledRegion(region, player) {
-      const color = player === 1 ? "black" : "brown";
-
       region.forEach(([r, c]) => {
         const cell = gridContainer.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-        cell.style.backgroundColor = color;
-        grid[r][c] = null; // Marquer comme traité pour ne pas recapturer
+        cell.classList.add("captured");
+        grid[r][c] = -1; // Marquer comme capturé - Les cellules ne peuvent plus entourer d'autres cellules
       });
     }
 
@@ -275,6 +276,7 @@
         }
       }
     });
+
   </script>
 
 </body>
