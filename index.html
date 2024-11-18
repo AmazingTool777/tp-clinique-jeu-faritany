@@ -2,26 +2,46 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Jeu de faritany</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
-      <p>
-        Vous:
-        <strong id="player-score">0</strong>
-      </p>
-      <h1>Jeux de points</h1>
-      <p>
-        Ordinateur:
-        <strong id="computer-score">0</strong>
-      </p>
-    </header>
-
-    <canvas id="canvas"></canvas>
-
-    <script type="module" src="/main.js"></script>
+    <div
+      class="w-screen h-screen flex flex-col bg-no-repeat bg-cover"
+      style="background-image: url('gettyimages-1300195379-1024x1024.jpg')"
+    >
+      <header class="text-center text-4xl font-semibold pt-8 text-white">
+        Jeu de Faritany
+      </header>
+      <div class="basis-auto grow shrink flex w-full">
+        <a
+          href="component/faritany.html"
+          class="w-full flex flex-col justify-center items-center"
+        >
+          <div class="text-center bg-white px-3 py-4 text-xl">
+            <img
+              src="4330756.png"
+              class="w-60 h-60 object-contain object-center block mb-2"
+              alt=""
+            />
+            1 contre 1
+          </div>
+        </a>
+        <a
+          href="component/minimax.html"
+          class="w-full flex flex-col justify-center items-center"
+        >
+          <div class="text-center bg-white px-3 py-4 text-xl">
+            <img
+              src="8687801.png"
+              class="w-60 h-60 object-contain object-center block mb-2"
+              alt=""
+            />
+            Contre ordinateur
+          </div>
+        </a>
+      </div>
+    </div>
   </body>
 </html>
