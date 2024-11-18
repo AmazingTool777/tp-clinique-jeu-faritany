@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grille 10x10 - Jeu à deux joueurs</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(10, 50px);
+        grid-template-rows: repeat(10, 50px);
+        gap: 1px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .cell {
+        width: 50px;
+        height: 50px;
+        background-color: #f0f0f0;
+        border: 1px solid #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .red {
+        background-color: red;
+      }
+
+      .green {
+        background-color: green;
+      }
+
+      .info {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+
+      #resetButton {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      #resetButton:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Jeu à deux joueurs - Grille 10x10</h1>
+    <div id="grid" class="grid"></div>
+
+    <div class="info">
+      <p>Tour du joueur: <span id="player-turn">1 (rouge)</span></p>
+    </div>
+
+    <button id="resetButton">Réinitialiser la grille</button>
+
+    <script>
+      const gridContainer = document.getElementById("grid");
+      const playerTurnDisplay = document.getElementById("player-turn");
+      const resetButton = document.getElementById("resetButton");
+
+      let currentPlayer = 1; // 1 pour le joueur 1 (rouge), 2 pour le joueur 2 (vert)
+      let grid = Array.from({ length: 10 }, () => Array(10).fill(null));
+
+      // Création de la grille
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 10; j++) {
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+
+          // Ajout d'un événement de clic sur chaque cellule
+          cell.addEventListener("click", function () {
+            if (grid[i][j] !== null) return;
+
+            const circle = document.createElement("div");
+            circle.classList.add("circle");
+
+            if (currentPlayer === 1) {
+              circle.classList.add("red");
+              grid[i][j] = 1; // Marque le coup du joueur 1
+            } else {
+              circle.classList.add("green");
+              grid[i][j] = 2; // Marque le coup du joueur 2
+            }
+
+            cell.appendChild(circle);
+            checkEncirclement(i, j, currentPlayer);
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            playerTurnDisplay.textContent = `Tour du joueur: ${currentPlayer} (${
+              currentPlayer === 1 ? "rouge" : "vert"
+            })`;
+          });
+
+          gridContainer.appendChild(cell);
+        }
+      }
+
+      // Fonction pour vérifier si une région est complètement encerclée
+      function checkEncirclement(row, col, player) {
+        const visited = Array.from({ length: 10 }, () => Array(10).fill(false));
+        const opponent = player === 1 ? 2 : 1;
+
+        const isEncircled = (r, c, boundaries) => {
+          if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
+          if (visited[r][c] || grid[r][c] === player) return true;
+          if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
+          visited[r][c] = true;
+
+          const up = isEncircled(r - 1, c, boundaries);
+          const down = isEncircled(r + 1, c, boundaries);
+          const left = isEncircled(r, c - 1, boundaries);
+          const right = isEncircled(r, c + 1, boundaries);
+
+          return up && down && left && right;
+        };
+
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (grid[i][j] === opponent && !visited[i][j]) {
+              if (isEncircled(i, j, [])) {
+                colorEncircledRegion(i, j, player);
+              }
+            }
+          }
+        }
+      }
+
+      function checkEncirclement(row, col, player) {
+        const visited = Array.from({ length: 10 }, () => Array(10).fill(false));
+        const opponent = player === 1 ? 2 : 1;
+
+        // Fonction récursive pour vérifier si une région est entourée
+        const isEncircled = (r, c, region, boundaries) => {
+          if (r < 0 || r >= 10 || c < 0 || c >= 10) return false; // Hors limites
+          if (visited[r][c] || grid[r][c] === player) return true; // Ignorer si déjà visité ou cellule alliée
+          if (grid[r][c] === null) return false; // Non encerclé s'il y a une cellule vide
+
+          visited[r][c] = true; // Marquer comme visité
+
+          // Si c'est une cellule de l'adversaire, ajouter aux "regions"
+          if (grid[r][c] === opponent) region.push([r, c]);
+
+          // Si c'est une cellule du joueur actuel, c'est une frontière
+          if (grid[r][c] === player) boundaries.push([r, c]);
+
+          // Vérifier toutes les directions
+          const up = isEncircled(r - 1, c, region, boundaries);
+          const down = isEncircled(r + 1, c, region, boundaries);
+          const left = isEncircled(r, c - 1, region, boundaries);
+          const right = isEncircled(r, c + 1, region, boundaries);
+
+          return up && down && left && right;
+        };
+
+        // Vérifier toutes les cellules de la grille
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 10; j++) {
+            if (grid[i][j] === opponent && !visited[i][j]) {
+              const region = [];
+              const boundaries = [];
+
+              if (isEncircled(i, j, region, boundaries)) {
+                colorEncircledRegion(region, boundaries, player);
+              }
+            }
+          }
+        }
+      }
+
+      // Fonction pour colorier la région et ses contours
+      function colorEncircledRegion(region, boundaries, player) {
+        const color = player === 1 ? "black" : "brown";
+
+        // Colorer les cellules de la région
+        region.forEach(([r, c]) => {
+          const cell = gridContainer.querySelector(
+            `[data-row="${r}"][data-col="${c}"]`
+          );
+          cell.style.backgroundColor = color;
+          grid[r][c] = null; // Marquer comme traité
+        });
+
+        // Colorer les cellules de la bordure
+        boundaries.forEach(([r, c]) => {
+          const cell = gridContainer.querySelector(
+            `[data-row="${r}"][data-col="${c}"]`
+          );
+          cell.style.borderColor = color;
+        });
+      }
+    </script>
+  </body>
+</html>
